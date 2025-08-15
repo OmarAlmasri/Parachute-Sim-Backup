@@ -102,6 +102,13 @@ export function addPerson(scene, world) {
                     hasPlayedLandingAnimation = true;
                     isJumping = false;
 
+                    // Hide parachute when landing
+                    if (parachuteModel && parachuteDeployed) {
+                        parachuteModel.hide();
+                        parachuteDeployed = false;
+                        console.log('Parachute hidden due to landing');
+                    }
+
                     // Play landing animation
                     if (currentAction) {
                         currentAction.fadeOut(0.2);
@@ -244,6 +251,13 @@ export function addPerson(scene, world) {
                     console.log('Triggering land animation at height:', physicBody.position.y);
                     hasPlayedLandingAnimation = true;
 
+                    // Hide parachute when landing
+                    if (parachuteModel && parachuteDeployed) {
+                        parachuteModel.hide();
+                        parachuteDeployed = false;
+                        console.log('Parachute hidden due to landing');
+                    }
+
                     // Stop any current animation
                     if (currentAction) {
                         currentAction.fadeOut(0.2);
@@ -260,8 +274,8 @@ export function addPerson(scene, world) {
                 }
             }
 
-            // Update parachute position and effects
-            if (parachuteModel && parachuteDeployed) {
+            // Update parachute position and effects only when deployed and visible
+            if (parachuteModel && parachuteDeployed && parachuteModel.isVisible) {
                 parachuteModel.updatePosition(person.position);
                 parachuteModel.applyWindEffect(5, 0); // Default wind effect
             }
@@ -314,8 +328,16 @@ export function addPerson(scene, world) {
                 console.log('Parachute deployed!');
             }
         },
+        hideParachute: () => {
+            if (parachuteModel && parachuteDeployed) {
+                parachuteModel.hide();
+                parachuteDeployed = false;
+                console.log('Parachute manually hidden');
+            }
+        },
         getParachuteModel: () => parachuteModel,
         isParachuteDeployed: () => parachuteDeployed,
+        hasLanded: () => hasPlayedLandingAnimation,
         resetPerson: () => {
             // Reset all person state
             hasPlayedLandingAnimation = false;

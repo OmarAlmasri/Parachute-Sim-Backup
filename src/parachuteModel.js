@@ -1,71 +1,79 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export class ParachuteModel {
     constructor() {
         this.parachute = null;
-        this.ropes = [];
+        this.parachuteGroup = null;
         this.isVisible = false;
         this.openingProgress = 0;
-        this.maxRopeLength = 20; // Increased from 8 to 20 for higher positioning
-        this.parachuteRadius = 8; // Increased from 4 to 8 for larger canopy
-        this.parachuteHeight = 10; // Increased from 1.5 to 2
+        this.maxRopeLength = 20; // Height above skydiver
+        this.parachuteRadius = 8; // For physics calculations
+        this.parachuteHeight = 10; // For physics calculations
+        this.loader = new GLTFLoader();
+        this.isLoaded = false;
     }
 
     createParachute() {
-        // Create parachute canopy (dome shape)
+        // Create parachute group
+        this.parachuteGroup = new THREE.Group();
+
+        // Load the GLB model
+        this.loader.load(
+            '/models/Parachute.glb',
+            (gltf) => {
+                this.parachute = gltf.scene;
+
+                // Scale the model appropriately
+                this.parachute.scale.set(8, 8, 8); // Adjust scale as needed
+
+                // Position the parachute above the skydiver
+                this.parachute.position.y = this.maxRopeLength + 24;
+
+                // Add to the group
+                this.parachuteGroup.add(this.parachute);
+
+                // Initially hidden
+                this.parachuteGroup.visible = false;
+
+                this.isLoaded = true;
+                console.log('Parachute GLB model loaded successfully');
+            },
+            (progress) => {
+                console.log('Loading parachute model...', (progress.loaded / progress.total * 100) + '%');
+            },
+            (error) => {
+                console.error('Error loading parachute model:', error);
+                // Fallback to simple geometry if loading fails
+                this.createFallbackParachute();
+            }
+        );
+
+        return this.parachuteGroup;
+    }
+
+    createFallbackParachute() {
+        // Fallback to simple geometry if GLB loading fails
         const canopyGeometry = new THREE.SphereGeometry(this.parachuteRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
         const canopyMaterial = new THREE.MeshLambertMaterial({
-            color: 0xFF6B35, // Changed to bright orange for better visibility
+            color: 0xFF6B35,
             transparent: true,
-            opacity: 0.9, // Increased opacity
+            opacity: 0.9,
             side: THREE.DoubleSide
         });
 
         this.parachute = new THREE.Mesh(canopyGeometry, canopyMaterial);
         this.parachute.position.y = this.maxRopeLength;
-        this.parachute.scale.set(1, 0.3, 1); // Flatten the sphere to create dome shape
+        this.parachute.scale.set(1, 0.3, 1);
 
-        // Create parachute group
-        this.parachuteGroup = new THREE.Group();
         this.parachuteGroup.add(this.parachute);
-
-        // Create ropes
-        this.createRopes();
-
-        // Add ropes to group
-        this.ropes.forEach(rope => {
-            this.parachuteGroup.add(rope);
-        });
-
-        // Initially hidden
         this.parachuteGroup.visible = false;
+        this.isLoaded = true;
 
-        return this.parachuteGroup;
+        console.log('Using fallback parachute geometry');
     }
 
-    createRopes() {
-        const ropeCount = 12; // Increased from 8 to 12 for better coverage
-        const ropeGeometry = new THREE.CylinderGeometry(0.04, 0.04, this.maxRopeLength, 8); // Thicker ropes
-        const ropeMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
-
-        for (let i = 0; i < ropeCount; i++) {
-            const rope = new THREE.Mesh(ropeGeometry, ropeMaterial);
-
-            // Position ropes around the parachute edge
-            const angle = (i / ropeCount) * Math.PI * 2;
-            const radius = this.parachuteRadius * 0.8;
-
-            rope.position.x = Math.cos(angle) * radius;
-            rope.position.z = Math.sin(angle) * radius;
-            rope.position.y = this.maxRopeLength / 2;
-
-            // Rotate rope to point downward
-            rope.rotation.z = Math.atan2(rope.position.x, rope.position.y);
-            rope.rotation.x = Math.PI / 2;
-
-            this.ropes.push(rope);
-        }
-    }
+    // Ropes are now part of the GLB model, so we don't need to create them separately
 
     show() {
         this.isVisible = true;
@@ -77,22 +85,22 @@ export class ParachuteModel {
         this.isVisible = false;
         this.parachuteGroup.visible = false;
         this.openingProgress = 0;
+
+        // Reset parachute scale and rotation when hiding
+        if (this.parachute && this.isLoaded) {
+            this.parachute.scale.set(8, 8, 8); // Reset to base scale
+            this.parachute.rotation.set(0, 0, 0); // Reset rotation
+        }
     }
 
     updateOpeningProgress(progress) {
         this.openingProgress = Math.min(progress, 1.0);
 
-        if (this.parachuteGroup) {
+        if (this.parachuteGroup && this.parachute && this.isLoaded) {
             // Scale parachute during opening
-            const scale = 0.1 + (this.openingProgress * 0.9);
-            this.parachute.scale.set(scale, 0.3 * scale, scale);
-
-            // Adjust rope lengths during opening
-            this.ropes.forEach((rope, index) => {
-                const ropeLength = this.maxRopeLength * this.openingProgress;
-                rope.scale.y = ropeLength / this.maxRopeLength;
-                rope.position.y = ropeLength / 2;
-            });
+            const baseScale = 8; // Base scale from constructor
+            const scale = baseScale * (0.1 + (this.openingProgress * 0.9));
+            this.parachute.scale.set(scale, scale, scale);
 
             // Add some wobble during opening
             if (this.openingProgress < 1.0) {
@@ -105,7 +113,7 @@ export class ParachuteModel {
     }
 
     updatePosition(skydiverPosition) {
-        if (this.parachuteGroup && this.isVisible) {
+        if (this.parachuteGroup && this.isVisible && this.isLoaded) {
             // Position parachute above skydiver
             this.parachuteGroup.position.copy(skydiverPosition);
             this.parachuteGroup.position.y += this.maxRopeLength * this.openingProgress;
@@ -114,7 +122,7 @@ export class ParachuteModel {
 
     // Add wind effects to parachute
     applyWindEffect(windStrength, windDirection) {
-        if (this.parachuteGroup && this.isVisible && this.openingProgress > 0.5) {
+        if (this.parachuteGroup && this.isVisible && this.openingProgress > 0.5 && this.isLoaded) {
             const windInfluence = windStrength * 0.1 * this.openingProgress;
 
             // Tilt parachute based on wind
@@ -140,17 +148,28 @@ export class ParachuteModel {
     // Cleanup
     dispose() {
         if (this.parachute) {
-            this.parachute.geometry.dispose();
-            this.parachute.material.dispose();
+            // For GLB models, we need to dispose of all materials and geometries recursively
+            this.disposeObject(this.parachute);
         }
 
-        this.ropes.forEach(rope => {
-            rope.geometry.dispose();
-            rope.material.dispose();
-        });
-
-        this.ropes = [];
         this.parachute = null;
         this.parachuteGroup = null;
+        this.isLoaded = false;
+    }
+
+    disposeObject(object) {
+        if (object.geometry) {
+            object.geometry.dispose();
+        }
+        if (object.material) {
+            if (Array.isArray(object.material)) {
+                object.material.forEach(material => material.dispose());
+            } else {
+                object.material.dispose();
+            }
+        }
+        if (object.children) {
+            object.children.forEach(child => this.disposeObject(child));
+        }
     }
 }
