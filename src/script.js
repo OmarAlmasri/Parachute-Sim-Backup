@@ -93,11 +93,11 @@ addPlatform(scene, world);
 const person = addPerson(scene, world);
 
 // Create wind visualization
-const windVisualization = new WindVisualization(scene, 5, 0);
+const windVisualization = new WindVisualization(scene, 0, 0);
 
 // Create parachute physics system
 const parachutePhysics = createParachutePhysics(world, 80);
-const physicsControls = new PhysicsControls(parachutePhysics, world, windVisualization);
+window.physicsControls = new PhysicsControls(parachutePhysics, world, windVisualization);
 
 
 
@@ -175,7 +175,7 @@ window.addEventListener("resize", () => {
 // Keyboard controls for parachute deployment
 window.addEventListener("keydown", (event) => {
   switch (event.code) {
-    case "Space":
+    case "KeyP":
       event.preventDefault();
       if (person && person.deployParachute) {
         person.deployParachute();

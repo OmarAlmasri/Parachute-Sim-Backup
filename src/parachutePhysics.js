@@ -56,7 +56,7 @@ export class ParachutePhysics {
 
         // Wind simulation
         this.windVelocity = new THREE.Vector3(0, 0, 0);
-        this.windStrength = 5; // m/s
+        this.windStrength = 0; // m/s
         this.windDirection = 0; // radians
 
         // Timing

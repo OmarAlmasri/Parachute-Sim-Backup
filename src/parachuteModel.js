@@ -28,7 +28,7 @@ export class ParachuteModel {
                 this.parachute.scale.set(8, 8, 8); // Adjust scale as needed
 
                 // Position the parachute above the skydiver
-                this.parachute.position.y = this.maxRopeLength + 24;
+                this.parachute.position.y = this.maxRopeLength +7; //adjusted based on person's y
 
                 // Add to the group
                 this.parachuteGroup.add(this.parachute);
@@ -126,8 +126,10 @@ export class ParachuteModel {
             const windInfluence = windStrength * 0.1 * this.openingProgress;
 
             // Tilt parachute based on wind
-            this.parachute.rotation.x = Math.sin(windDirection) * windInfluence;
+            this.parachute.rotation.x = -Math.sin(windDirection) * windInfluence;
             this.parachute.rotation.z = Math.cos(windDirection) * windInfluence;
+            // Remove z-axis rotation to keep parachute stable
+            // this.parachute.rotation.z = 0;
 
             // Slight position drift due to wind
             this.parachuteGroup.position.x += Math.cos(windDirection) * windInfluence * 0.01;

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export class WindVisualization {
-    constructor(scene, windStrength = 5, windDirection = 0) {
+    constructor(scene, windStrength = 0, windDirection = 0) {
         this.scene = scene;
         this.windStrength = windStrength;
         this.windDirection = windDirection;

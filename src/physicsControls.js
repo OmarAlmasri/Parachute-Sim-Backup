@@ -16,12 +16,12 @@ export class PhysicsControls {
         const physicsFolder = this.gui.addFolder('Physics Simulation');
 
         // Parachute deployment
-        const deployButton = { deploy: () => this.parachutePhysics.deployParachute() };
-        physicsFolder.add(deployButton, 'deploy').name('Deploy Parachute');
+        // const deployButton = { deploy: () => this.parachutePhysics.deployParachute() };
+        // physicsFolder.add(deployButton, 'deploy').name('Deploy Parachute');
 
         // Reset simulation
-        const resetButton = { reset: () => this.resetSimulation() };
-        physicsFolder.add(resetButton, 'reset').name('Reset Simulation');
+        // const resetButton = { reset: () => this.resetSimulation() };
+        // physicsFolder.add(resetButton, 'reset').name('Reset Simulation');
 
         physicsFolder.open();
 
@@ -29,45 +29,83 @@ export class PhysicsControls {
         const environmentFolder = this.gui.addFolder('Environment');
 
         // Wind controls
-        const windControls = {
-            windStrength: this.parachutePhysics.windStrength,
-            windDirection: this.parachutePhysics.windDirection * (180 / Math.PI), // Convert to degrees
-            setWind: () => {
-                this.parachutePhysics.setWind(
-                    windControls.windStrength,
-                    windControls.windDirection * (Math.PI / 180) // Convert back to radians
+        // const windControls = {
+        //     windStrength: this.parachutePhysics.windStrength,
+        //     windDirection: this.parachutePhysics.windDirection * (180 / Math.PI), // Convert to degrees
+        //     setWind: () => {
+        //         this.parachutePhysics.setWind(
+        //             windControls.windStrength,
+        //             windControls.windDirection * (Math.PI / 180) // Convert back to radians
+        //         );
+        //     }
+        // };
+
+     // Wind controls
+     const windControls = {
+        windStrength: this.parachutePhysics.windStrength,
+        windDirection: this.parachutePhysics.windDirection * (180 / Math.PI) // Convert to degrees
+    };
+
+    // Add wind controls that update automatically
+    environmentFolder.add(windControls, 'windStrength', 0, 20, 0.5)
+        .name('Wind Strength (m/s)')
+        .onChange((value) => {
+            this.parachutePhysics.setWind(
+                value,
+                windControls.windDirection * (Math.PI / 180)
+            );
+            if (this.windVisualization) {
+                this.windVisualization.setWind(
+                    value,
+                    windControls.windDirection * (Math.PI / 180)
                 );
             }
-        };
+        });
 
-        environmentFolder.add(windControls, 'windStrength', 0, 20, 0.5).name('Wind Strength (m/s)');
-        environmentFolder.add(windControls, 'windDirection', 0, 360, 1).name('Wind Direction (°)');
-        environmentFolder.add(windControls, 'setWind').name('Apply Wind');
+        // environmentFolder.add(windControls, 'windStrength', 0, 20, 0.5).name('Wind Strength (m/s)');
+        // environmentFolder.add(windControls, 'windDirection', 0, 360, 1).name('Wind Direction (°)');
+        // environmentFolder.add(windControls, 'setWind').name('Apply Wind');
 
         // Add wind disable button
-        const disableWindButton = { disable: () => this.parachutePhysics.disableWind() };
-        environmentFolder.add(disableWindButton, 'disable').name('Disable Wind');
+        // const disableWindButton = { disable: () => this.parachutePhysics.disableWind() };
+        // environmentFolder.add(disableWindButton, 'disable').name('Disable Wind');
 
-        // Update wind visualization if available
-        if (this.windVisualization) {
-            windControls.setWind = () => {
+        // // Update wind visualization if available
+        // if (this.windVisualization) {
+        //     windControls.setWind = () => {
+        //         this.parachutePhysics.setWind(
+        //             windControls.windStrength,
+        //             windControls.windDirection * (Math.PI / 180)
+        //         );
+        //         this.windVisualization.setWind(
+        //             windControls.windStrength,
+        //             windControls.windDirection * (Math.PI / 180)
+        //         );
+        //     };
+
+        //     // Also update visualization when wind is disabled
+        //     const originalDisableWind = this.parachutePhysics.disableWind;
+        //     this.parachutePhysics.disableWind = () => {
+        //         originalDisableWind.call(this.parachutePhysics);
+        //         this.windVisualization.setWind(0, 0);
+        //     };
+        // }
+
+        
+        environmentFolder.add(windControls, 'windDirection', 0, 360, 1)
+            .name('Wind Direction (°)')
+            .onChange((value) => {
                 this.parachutePhysics.setWind(
                     windControls.windStrength,
-                    windControls.windDirection * (Math.PI / 180)
+                    value * (Math.PI / 180)
                 );
-                this.windVisualization.setWind(
-                    windControls.windStrength,
-                    windControls.windDirection * (Math.PI / 180)
-                );
-            };
-
-            // Also update visualization when wind is disabled
-            const originalDisableWind = this.parachutePhysics.disableWind;
-            this.parachutePhysics.disableWind = () => {
-                originalDisableWind.call(this.parachutePhysics);
-                this.windVisualization.setWind(0, 0);
-            };
-        }
+                if (this.windVisualization) {
+                    this.windVisualization.setWind(
+                        windControls.windStrength,
+                        value * (Math.PI / 180)
+                    );
+                }
+            });
 
         // Temperature and pressure display
         const envDisplay = {
