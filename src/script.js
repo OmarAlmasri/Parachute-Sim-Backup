@@ -19,6 +19,7 @@ import { addPerson } from "./person.js";
 import { createParachutePhysics } from "./parachutePhysics.js";
 import { PhysicsControls } from "./physicsControls.js";
 import { WindVisualization } from "./windVisualization.js";
+import { createSkybox } from "./skybox.js";
 
 // Canvas
 const canvas = document.querySelector("canvas.webgl");
@@ -63,7 +64,7 @@ const sunGlowTexture = textureLoader.load('/textures/sun/glow.jpg')
 const scene = new THREE.Scene();
 
 // إضافة الضباب (fog) بلون قريب من لون الخلفية
-scene.fog = new THREE.Fog('#87ceeb', 100, 400);
+// scene.fog = new THREE.Fog('#87ceeb', 100, 30000);
 
 // Sizes
 const sizes = {
@@ -82,10 +83,11 @@ scene.add(ambientLight);
 
 // Create sun using module
 const { sunLight, sunGlow } = createSun(sunGlowTexture);
-scene.add(sunLight);
-scene.add(sunGlow);
+// scene.add(sunLight);
+// scene.add(sunGlow);
 
 // After creating the scene
+createSkybox(scene);
 addGrassFloor(scene, world);
 // addRiver(scene);
 addWoodAndTrees(scene);
@@ -130,17 +132,6 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setClearColor("#87ceeb");
-
-// Axes helper for debugging
-const axesHelper = new THREE.AxesHelper(250);
-axesHelper.position.set(-125, 0, -125);
-axesHelper.rotation.set(0, Math.PI * 2, 0);
-scene.add(axesHelper);
-
-const axesHelper2 = new THREE.AxesHelper(250);
-axesHelper2.position.set(126, 0.01, 125);
-axesHelper2.rotation.set(0, Math.PI, 0);
-scene.add(axesHelper2);
 
 // Event handlers
 window.onload = () => {
