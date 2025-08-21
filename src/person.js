@@ -26,7 +26,7 @@ export function addPerson(scene, world) {
     loader.load('/models/skydiver3.glb', (gltf) => {
         person = gltf.scene;
         person.scale.set(20, 20, 20);
-        person.position.set(28, 200, 200);  // Starting position - higher up
+        person.position.set(28, 183, 200);  // Starting position - higher up
         person.rotation.y = Math.PI; // Rotate 180 degrees around Y-axis
         person.castShadow = true;
 
@@ -36,7 +36,7 @@ export function addPerson(scene, world) {
         const shape = new CANNON.Box(new Vec3(1, 2, 1));
         physicBody = new CANNON.Body({
             mass: 80,
-            position: new Vec3(28, 200, 200), // Match the visual position
+            position: new Vec3(28, 183, 200), // Match the visual position
             shape: shape,
             fixedRotation: true,
             material: world.defaultContactMaterial
@@ -44,7 +44,7 @@ export function addPerson(scene, world) {
 
         // Store initial position for reset functionality
         physicBody.userData = {
-            initialPosition: new Vec3(28, 200, 200)
+            initialPosition: new Vec3(28, 183, 200)
         };
 
         // Set initial state
@@ -74,7 +74,7 @@ export function addPerson(scene, world) {
             isJumping = true;
             if (physicBody) {
                 // Initial jump impulse - ensure the body actually moves
-                physicBody.velocity.set(0, 20, -30); // Stronger upward and forward momentum
+                physicBody.velocity.set(0, 20, -20); // Stronger upward and forward momentum
                 console.log("Starting jump! Position:", physicBody.position, "Velocity:", physicBody.velocity);
 
                 // Force the body to be active and ensure it's not sleeping
@@ -91,7 +91,7 @@ export function addPerson(scene, world) {
             if (physicBody && isJumping) {
                 // Keep moving forward while in the air
                 physicBody.velocity.z = -20;
-
+                physicBody.position.y = 183;
                 // Update model
                 person.position.copy(physicBody.position);
                 person.rotation.y = Math.PI;
@@ -101,6 +101,13 @@ export function addPerson(scene, world) {
                     console.log('Landing triggered at height:', physicBody.position.y);
                     hasPlayedLandingAnimation = true;
                     isJumping = false;
+
+                    // Hide parachute when landing
+                    if (parachuteModel && parachuteDeployed) {
+                        parachuteModel.hide();
+                        parachuteDeployed = false;
+                        console.log('Parachute hidden due to landing');
+                    }
 
                     // Play landing animation
                     if (currentAction) {
@@ -233,9 +240,9 @@ export function addPerson(scene, world) {
             ));
 
             // Debug: Check if physics body is actually moving
-            if (isJumping && physicBody.position.y < 199) {
-                console.log("Physics body is moving! Y position:", physicBody.position.y);
-            }
+            // if (isJumping && physicBody.position.y < 199) {
+            //     console.log("Physics body is moving! Y position:", physicBody.position.y);
+            // }
 
             // Check if person is close to the ground and hasn't played landing animation yet
             if (!hasPlayedLandingAnimation && animations.length > 0) {
@@ -243,6 +250,13 @@ export function addPerson(scene, world) {
                 if (physicBody.position.y <= 3 && physicBody.velocity.y < 0) {
                     console.log('Triggering land animation at height:', physicBody.position.y);
                     hasPlayedLandingAnimation = true;
+
+                    // Hide parachute when landing
+                    if (parachuteModel && parachuteDeployed) {
+                        parachuteModel.hide();
+                        parachuteDeployed = false;
+                        console.log('Parachute hidden due to landing');
+                    }
 
                     // Stop any current animation
                     if (currentAction) {
@@ -260,10 +274,16 @@ export function addPerson(scene, world) {
                 }
             }
 
-            // Update parachute position and effects
-            if (parachuteModel && parachuteDeployed) {
+            // Update parachute position and effects only when deployed and visible
+            if (parachuteModel && parachuteDeployed && parachuteModel.isVisible) {
                 parachuteModel.updatePosition(person.position);
-                parachuteModel.applyWindEffect(5, 0); // Default wind effect
+                // parachuteModel.applyWindEffect(5, 0); // Default wind effect
+                // Get wind values from physics system
+                if (window.physicsControls && window.physicsControls.windControls) {
+                    const windStrength = window.physicsControls.windControls.windStrength || 0;
+                    const windDirection = (window.physicsControls.windControls.windDirection || 0) * (Math.PI / 180); // Convert degrees to radians
+                    parachuteModel.applyWindEffect(windStrength, windDirection);
+                }
             }
 
             // Prevent micro-bouncing when on ground
@@ -287,7 +307,7 @@ export function addPerson(scene, world) {
                 // Apply forward impulse when starting the jump
                 if (physicBody) {
                     // Apply an impulse in the negative Z direction (forward)
-                    const jumpForce = new Vec3(0, 5, -20); // Upward and forward force
+                    const jumpForce = new Vec3(0, 20, -20); //  forward force
                     physicBody.applyImpulse(jumpForce, physicBody.position);
                 }
             }
@@ -314,8 +334,16 @@ export function addPerson(scene, world) {
                 console.log('Parachute deployed!');
             }
         },
+        hideParachute: () => {
+            if (parachuteModel && parachuteDeployed) {
+                parachuteModel.hide();
+                parachuteDeployed = false;
+                console.log('Parachute manually hidden');
+            }
+        },
         getParachuteModel: () => parachuteModel,
         isParachuteDeployed: () => parachuteDeployed,
+        hasLanded: () => hasPlayedLandingAnimation,
         resetPerson: () => {
             // Reset all person state
             hasPlayedLandingAnimation = false;
@@ -345,7 +373,7 @@ export function addPerson(scene, world) {
                 isJumping = true;
                 if (physicBody) {
                     // Initial jump impulse - ensure the body actually moves
-                    physicBody.velocity.set(0, 20, -30); // Stronger upward and forward momentum
+                    physicBody.velocity.set(0, 20, -20); // Stronger upward and forward momentum
                     console.log("Starting jump after reset! Position:", physicBody.position, "Velocity:", physicBody.velocity);
 
                     // Force the body to be active and ensure it's not sleeping
