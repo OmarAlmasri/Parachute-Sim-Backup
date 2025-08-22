@@ -169,10 +169,20 @@ window.addEventListener("keydown", (event) => {
     case "KeyP":
       event.preventDefault();
       if (person && person.deployParachute) {
-        person.deployParachute();
-        // Also deploy in physics system
-        if (parachutePhysics) {
-          parachutePhysics.deployParachute();
+        // Check if parachute can be deployed
+        if (person.canDeployParachute()) {
+          person.deployParachute();
+          // Also deploy in physics system
+          if (parachutePhysics) {
+            parachutePhysics.deployParachute();
+          }
+        } else {
+          // Provide feedback about why parachute can't be deployed
+          if (person.hasLanded()) {
+            console.log('🚫 Cannot deploy parachute - skydiver has already landed!');
+          } else if (person.isParachuteDeployed()) {
+            console.log('🚫 Cannot deploy parachute - already deployed!');
+          }
         }
       }
       break;

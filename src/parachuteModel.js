@@ -28,7 +28,7 @@ export class ParachuteModel {
                 this.parachute.scale.set(8, 8, 8); // Adjust scale as needed
 
                 // Position the parachute above the skydiver
-                this.parachute.position.y = this.maxRopeLength +7; //adjusted based on person's y
+                this.parachute.position.y = this.maxRopeLength + 7; //adjusted based on person's y
 
                 // Add to the group
                 this.parachuteGroup.add(this.parachute);

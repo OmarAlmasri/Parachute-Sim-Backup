@@ -328,6 +328,12 @@ export function addPerson(scene, world) {
             }
         },
         deployParachute: () => {
+            // Don't deploy parachute if the person has landed
+            if (hasPlayedLandingAnimation) {
+                console.log('Cannot deploy parachute - skydiver has already landed!');
+                return;
+            }
+
             if (parachuteModel && !parachuteDeployed) {
                 parachuteDeployed = true;
                 parachuteModel.show();
@@ -344,6 +350,7 @@ export function addPerson(scene, world) {
         getParachuteModel: () => parachuteModel,
         isParachuteDeployed: () => parachuteDeployed,
         hasLanded: () => hasPlayedLandingAnimation,
+        canDeployParachute: () => !hasPlayedLandingAnimation && !parachuteDeployed,
         resetPerson: () => {
             // Reset all person state
             hasPlayedLandingAnimation = false;
