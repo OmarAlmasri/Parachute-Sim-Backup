@@ -8,9 +8,7 @@ import { gsap } from "gsap";
 import CANNON, { Vec3 } from "cannon";
 
 // Import modules
-// import { addGrassFloor } from "./grass.js";
-import { createSun } from "./sun.js";
-import { addGrassFloor } from './grass.js';
+import { addGrassFloor } from "./grass.js";
 import { addWoodAndTrees } from './sides.js';
 import { addPlatform } from './platform.js';
 import { setupFlyCamera } from './flyCamera.js';
@@ -81,15 +79,9 @@ const sizes = {
 const ambientLight = new THREE.AmbientLight("#b9d5ff", 0.75);
 scene.add(ambientLight);
 
-// Create sun using module
-const { sunLight, sunGlow } = createSun(sunGlowTexture);
-// scene.add(sunLight);
-// scene.add(sunGlow);
-
 // After creating the scene
 createSkybox(scene);
 addGrassFloor(scene, world);
-// addRiver(scene);
 addWoodAndTrees(scene);
 addPlatform(scene, world);
 const person = addPerson(scene, world);
@@ -220,14 +212,14 @@ function animate() {
     // Debug physics body state
     if (person.getPhysicsBody) {
       const physicsBody = person.getPhysicsBody();
-      if (physicsBody) {
-        // Log physics state every few seconds for debugging
-        if (Math.random() < 0.01) { // ~1% chance per frame
-          console.log("Physics Debug - Position:", physicsBody.position,
-            "Velocity:", physicsBody.velocity,
-            "Is sleeping:", physicsBody.sleepState);
-        }
-      }
+      // if (physicsBody) {
+      //   // Log physics state every few seconds for debugging
+      //   if (Math.random() < 0.01) { // ~1% chance per frame
+      //     console.log("Physics Debug - Position:", physicsBody.position,
+      //       "Velocity:", physicsBody.velocity,
+      //       "Is sleeping:", physicsBody.sleepState);
+      //   }
+      // }
     }
   }
 
