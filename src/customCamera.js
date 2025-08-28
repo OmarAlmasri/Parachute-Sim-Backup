@@ -69,7 +69,7 @@ export function setupCustomCamera(camera, canvas) {
             case 'ArrowRight':
                 moveRight = true;
                 break;
-            case 'KeyR':
+            // case 'KeyR':
             case 'Space':
                 moveUp = true;
                 break;

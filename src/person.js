@@ -26,8 +26,8 @@ export function addPerson(scene, world) {
     loader.load('/models/skydiver3.glb', (gltf) => {
         person = gltf.scene;
         person.scale.set(20, 20, 20);
-        person.position.set(28, 183, 200);  // Starting position - higher up
-        person.rotation.y = Math.PI; // Rotate 180 degrees around Y-axis
+        person.position.set(0, 455, 185);  
+        person.rotation.y = Math.PI; 
         person.castShadow = true;
 
         /**
@@ -36,15 +36,23 @@ export function addPerson(scene, world) {
         const shape = new CANNON.Box(new Vec3(1, 2, 1));
         physicBody = new CANNON.Body({
             mass: 80,
-            position: new Vec3(28, 183, 200), // Match the visual position
+            position: new Vec3(0, 455, 185), 
             shape: shape,
             fixedRotation: true,
             material: world.defaultContactMaterial
         });
 
-        // Store initial position for reset functionality
+        // Add link between parachutePhysics and physicBody
+        if (window.physicsControls && window.physicsControls.parachutePhysics) {
+            window.physicsControls.parachutePhysics.onMassChange = (newMass) => {
+                physicBody.mass = newMass;
+                physicBody.updateMassProperties();
+                console.log('Physics body mass updated to:', newMass);
+            };
+        }
+
         physicBody.userData = {
-            initialPosition: new Vec3(28, 183, 200)
+            initialPosition: new Vec3(0, 455, 185)
         };
 
         // Set initial state
@@ -74,7 +82,7 @@ export function addPerson(scene, world) {
             isJumping = true;
             if (physicBody) {
                 // Initial jump impulse - ensure the body actually moves
-                physicBody.velocity.set(0, 20, -20); // Stronger upward and forward momentum
+                physicBody.velocity.set(0, -1, -20); // Stronger upward and forward momentum
                 console.log("Starting jump! Position:", physicBody.position, "Velocity:", physicBody.velocity);
 
                 // Force the body to be active and ensure it's not sleeping
@@ -91,7 +99,7 @@ export function addPerson(scene, world) {
             if (physicBody && isJumping) {
                 // Keep moving forward while in the air
                 physicBody.velocity.z = -20;
-                physicBody.position.y = 183;
+                // physicBody.position.y = 457.5;
                 // Update model
                 person.position.copy(physicBody.position);
                 person.rotation.y = Math.PI;
@@ -380,7 +388,7 @@ export function addPerson(scene, world) {
                 isJumping = true;
                 if (physicBody) {
                     // Initial jump impulse - ensure the body actually moves
-                    physicBody.velocity.set(0, 20, -20); // Stronger upward and forward momentum
+                    physicBody.velocity.set(0, -1, -20); // Stronger upward and forward momentum
                     console.log("Starting jump after reset! Position:", physicBody.position, "Velocity:", physicBody.velocity);
 
                     // Force the body to be active and ensure it's not sleeping

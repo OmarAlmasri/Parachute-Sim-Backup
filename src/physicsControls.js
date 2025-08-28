@@ -21,30 +21,10 @@ export class PhysicsControls {
         // Physics simulation controls
         const physicsFolder = this.gui.addFolder('Physics Simulation');
 
-        // Parachute deployment
-        // const deployButton = { deploy: () => this.parachutePhysics.deployParachute() };
-        // physicsFolder.add(deployButton, 'deploy').name('Deploy Parachute');
-
-        // Reset simulation
-        // const resetButton = { reset: () => this.resetSimulation() };
-        // physicsFolder.add(resetButton, 'reset').name('Reset Simulation');
-
         physicsFolder.open();
 
         // Environmental controls
         const environmentFolder = this.gui.addFolder('Environment');
-
-        // Wind controls
-        // const windControls = {
-        //     windStrength: this.parachutePhysics.windStrength,
-        //     windDirection: this.parachutePhysics.windDirection * (180 / Math.PI), // Convert to degrees
-        //     setWind: () => {
-        //         this.parachutePhysics.setWind(
-        //             windControls.windStrength,
-        //             windControls.windDirection * (Math.PI / 180) // Convert back to radians
-        //         );
-        //     }
-        // };
 
         // Wind controls
         const windControls = {
@@ -67,37 +47,8 @@ export class PhysicsControls {
                     );
                 }
             });
-
-        // environmentFolder.add(windControls, 'windStrength', 0, 20, 0.5).name('Wind Strength (m/s)');
-        // environmentFolder.add(windControls, 'windDirection', 0, 360, 1).name('Wind Direction (°)');
-        // environmentFolder.add(windControls, 'setWind').name('Apply Wind');
-
-        // Add wind disable button
-        // const disableWindButton = { disable: () => this.parachutePhysics.disableWind() };
-        // environmentFolder.add(disableWindButton, 'disable').name('Disable Wind');
-
-        // // Update wind visualization if available
-        // if (this.windVisualization) {
-        //     windControls.setWind = () => {
-        //         this.parachutePhysics.setWind(
-        //             windControls.windStrength,
-        //             windControls.windDirection * (Math.PI / 180)
-        //         );
-        //         this.windVisualization.setWind(
-        //             windControls.windStrength,
-        //             windControls.windDirection * (Math.PI / 180)
-        //         );
-        //     };
-
-        //     // Also update visualization when wind is disabled
-        //     const originalDisableWind = this.parachutePhysics.disableWind;
-        //     this.parachutePhysics.disableWind = () => {
-        //         originalDisableWind.call(this.parachutePhysics);
-        //         this.windVisualization.setWind(0, 0);
-        //     };
-        // }
-
-
+            
+        // Wind Direction controls
         environmentFolder.add(windControls, 'windDirection', 0, 360, 1)
             .name('Wind Direction (°)')
             .onChange((value) => {
@@ -150,6 +101,11 @@ export class PhysicsControls {
 
         parachuteFolder.add(parachuteParams, 'mass', 50, 120, 1).name('Mass (kg)').onChange((value) => {
             this.parachutePhysics.mass = value;
+            
+            // Update physics body mass
+            if (this.parachutePhysics.onMassChange) {
+                this.parachutePhysics.onMassChange(value);
+            }
         });
 
         parachuteFolder.add(parachuteParams, 'parachuteArea', 20, 100, 1).name('Parachute Area (m²)').onChange((value) => {
@@ -173,7 +129,6 @@ export class PhysicsControls {
             state: this.parachutePhysics.state,
             altitude: this.parachutePhysics.altitude.toFixed(1) + ' m',
             velocity: '0.0 m/s',
-            terminalVelocity: this.parachutePhysics.terminalVelocity.toFixed(1) + ' m/s',
             velocityRatio: '0.0%',
             airDensityEffect: 'Standard',
             acceleration: '0.0 m/s²'
@@ -182,8 +137,6 @@ export class PhysicsControls {
         displayFolder.add(physicsDisplay, 'state').name('State').listen();
         displayFolder.add(physicsDisplay, 'altitude').name('Altitude').listen();
         displayFolder.add(physicsDisplay, 'velocity').name('Velocity').listen();
-        displayFolder.add(physicsDisplay, 'terminalVelocity').name('Terminal Velocity').listen();
-        displayFolder.add(physicsDisplay, 'velocityRatio').name('Velocity/Terminal Ratio').listen();
         displayFolder.add(physicsDisplay, 'airDensityEffect').name('Air Density Effect').listen();
         displayFolder.add(physicsDisplay, 'acceleration').name('Acceleration').listen();
 
@@ -215,7 +168,7 @@ export class PhysicsControls {
             showPrediction: () => {
                 const prediction = this.parachutePhysics.getTerminalVelocityPrediction();
                 console.log('=== Terminal Velocity Prediction ===');
-                console.log(`Current altitude: ${prediction.current.altitude.toFixed(1)}m`);
+                console.log(`Current altitude: ${prediction.current.altitude.toFixed(1)}`);
                 console.log(`Current terminal velocity: ${prediction.current.value.toFixed(1)}m/s`);
                 console.log(`Air density trend: ${prediction.airDensityTrend}`);
                 console.log(`Altitude effect: ${prediction.altitudeEffect}`);

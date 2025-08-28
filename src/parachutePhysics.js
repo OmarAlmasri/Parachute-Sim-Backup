@@ -176,10 +176,10 @@ export class ParachutePhysics {
             const finalTension = this.mass * PHYSICS_CONSTANTS.GRAVITY; // Full weight when fully open
             
             const currentTension = baseTension + (finalTension - baseTension) * tensionFactor;
-            return new THREE.Vector3(0, -currentTension, 0);
+            return new THREE.Vector3(0, currentTension, 0);
         }
 
-        return new THREE.Vector3(0, -this.mass * PHYSICS_CONSTANTS.GRAVITY, 0); 
+        return new THREE.Vector3(0, this.mass * PHYSICS_CONSTANTS.GRAVITY, 0); 
     }
 
     // Vt = √[(2 × m × g) / (ρ × A × Cd)]
@@ -278,7 +278,7 @@ export class ParachutePhysics {
         );
 
         // Only apply parachute physics when actually falling (not on ground)
-        if (this.altitude > 5 && this.parachuteOpen) {
+        if (this.altitude > 10 && this.parachuteOpen) {
             // Calculate drag force only (don't override gravity)
             const dragForce = this.calculateDrag(
                 this.velocity,
@@ -292,8 +292,12 @@ export class ParachutePhysics {
             // Calculate tension force (rope tension)
             const tensionForce = this.calculateTension();
 
+            // Calculate gravity force
+            const gravityForce = this.calculateGravity();
+
             // Combine forces
             const totalForce = new THREE.Vector3();
+            totalForce.add(gravityForce);
             totalForce.add(dragForce);
             totalForce.add(windForce);
             totalForce.add(tensionForce);
