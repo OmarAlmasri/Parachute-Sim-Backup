@@ -5,7 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FlyControls } from "three/examples/jsm/controls/FlyControls";
 import * as dat from "dat.gui";
 import { gsap } from "gsap";
-import CANNON, { Vec3 } from "cannon";
+import { CustomPhysicsWorld } from "./customPhysics.js";
 
 // Import modules
 import { addGrassFloor } from "./grass.js";
@@ -18,6 +18,7 @@ import { createParachutePhysics } from "./parachutePhysics.js";
 import { PhysicsControls } from "./physicsControls.js";
 import { WindVisualization } from "./windVisualization.js";
 import { createSkybox } from "./skybox.js";
+import { physicsDebug } from "./physicsDebug.js";
 
 // Canvas
 const canvas = document.querySelector("canvas.webgl");
@@ -27,26 +28,8 @@ const canvas = document.querySelector("canvas.webgl");
  * Physics
  */
 // World
-const world = new CANNON.World();
-world.gravity.set(0, -9.81, 0); // Use standard gravity
-world.broadphase = new CANNON.NaiveBroadphase();
-world.solver.iterations = 10;
-world.defaultContactMaterial.friction = 0.7;
-world.defaultContactMaterial.restitution = 0.01;
-
-//collision between skydiver and the ground (ضفناه بعد ما ضفناهن)
-const defaultMaterial = new CANNON.Material("default");
-const defaultContactMaterial = new CANNON.ContactMaterial(
-  defaultMaterial,
-  defaultMaterial,
-  {
-    friction: 0.7,       // Increased ground friction
-    restitution: 0.01,   // Near-zero but not exactly 0 (more stable than 0)
-    contactEquationStiffness: 1e8,  // Harder contacts
-    contactEquationRelaxation: 4,    // Faster settling
-  }
-);
-world.defaultContactMaterial = defaultContactMaterial;
+const world = new CustomPhysicsWorld();
+world.setGravity(new THREE.Vector3(0, -9.81, 0)); // Use standard gravity
 
 
 /**

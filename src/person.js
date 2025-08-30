@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import CANNON, { Vec3 } from "cannon";
+import { CustomPhysicsBody } from "./customPhysics.js";
 import { ParachuteModel } from "./parachuteModel.js";
 
 let mixer = null;
@@ -26,21 +26,14 @@ export function addPerson(scene, world) {
     loader.load('/models/skydiver3.glb', (gltf) => {
         person = gltf.scene;
         person.scale.set(20, 20, 20);
-        person.position.set(0, 455, 185);  
-        person.rotation.y = Math.PI; 
+        person.position.set(0, 455, 185);
+        person.rotation.y = Math.PI;
         person.castShadow = true;
 
         /**
          * PHYSICS
          */
-        const shape = new CANNON.Box(new Vec3(1, 2, 1));
-        physicBody = new CANNON.Body({
-            mass: 80,
-            position: new Vec3(0, 455, 185), 
-            shape: shape,
-            fixedRotation: true,
-            material: world.defaultContactMaterial
-        });
+        physicBody = new CustomPhysicsBody(80, new THREE.Vector3(0, 455, 185));
 
         // Add link between parachutePhysics and physicBody
         if (window.physicsControls && window.physicsControls.parachutePhysics) {
@@ -52,12 +45,12 @@ export function addPerson(scene, world) {
         }
 
         physicBody.userData = {
-            initialPosition: new Vec3(0, 455, 185)
+            initialPosition: new THREE.Vector3(0, 455, 185)
         };
 
         // Set initial state
-        physicBody.velocity.set(0, 0, 0); // Start with no velocity
-        physicBody.quaternion.setFromAxisAngle(new Vec3(0, 1, 0), Math.PI);
+        physicBody.setVelocity(new THREE.Vector3(0, 0, 0)); // Start with no velocity
+        physicBody.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
         world.addBody(physicBody);
 
         // Ensure the body is active and awake
@@ -82,7 +75,7 @@ export function addPerson(scene, world) {
             isJumping = true;
             if (physicBody) {
                 // Initial jump impulse - ensure the body actually moves
-                physicBody.velocity.set(0, -1, -20); // Stronger upward and forward momentum
+                physicBody.setVelocity(new THREE.Vector3(0, -1, -20)); // Stronger upward and forward momentum
                 console.log("Starting jump! Position:", physicBody.position, "Velocity:", physicBody.velocity);
 
                 // Force the body to be active and ensure it's not sleeping
@@ -98,7 +91,9 @@ export function addPerson(scene, world) {
 
             if (physicBody && isJumping) {
                 // Keep moving forward while in the air
-                physicBody.velocity.z = -20;
+                const currentVelocity = physicBody.velocity.clone();
+                currentVelocity.z = -20;
+                physicBody.setVelocity(currentVelocity);
                 // physicBody.position.y = 457.5;
                 // Update model
                 person.position.copy(physicBody.position);
@@ -127,20 +122,24 @@ export function addPerson(scene, world) {
                     }
 
                     // Stop forward movement
-                    physicBody.velocity.z = 0;
+                    const currentVelocity = physicBody.velocity.clone();
+                    currentVelocity.z = 0;
+                    physicBody.setVelocity(currentVelocity);
                 }
 
                 // Ground contact
                 if (physicBody.position.y < 1) {
-                    physicBody.position.y = 1;
-                    physicBody.velocity.set(0, 0, 0);
+                    physicBody.setPosition(new THREE.Vector3(physicBody.position.x, 1, physicBody.position.z));
+                    physicBody.setVelocity(new THREE.Vector3(0, 0, 0));
                     isJumping = false;
                 }
 
                 // Check if reached target
                 if (physicBody.position.z <= targetZ) {
-                    physicBody.position.z = targetZ;
-                    physicBody.velocity.z = 0;
+                    physicBody.setPosition(new THREE.Vector3(physicBody.position.x, physicBody.position.y, targetZ));
+                    const currentVelocity = physicBody.velocity.clone();
+                    currentVelocity.z = 0;
+                    physicBody.setVelocity(currentVelocity);
                     isJumping = false;
                 }
             }
@@ -278,7 +277,9 @@ export function addPerson(scene, world) {
                     }
 
                     // Slow down horizontal movement
-                    physicBody.velocity.z *= 0.5;
+                    const currentVelocity = physicBody.velocity.clone();
+                    currentVelocity.z *= 0.5;
+                    physicBody.setVelocity(currentVelocity);
                 }
             }
 
@@ -296,9 +297,9 @@ export function addPerson(scene, world) {
 
             // Prevent micro-bouncing when on ground
             if (physicBody.position.y < 1) {
-                physicBody.velocity.set(0, 0, 0);
+                physicBody.setVelocity(new THREE.Vector3(0, 0, 0));
                 physicBody.angularVelocity.set(0, 0, 0);
-                physicBody.position.y = 1; // Force position to exactly 1
+                physicBody.setPosition(new THREE.Vector3(physicBody.position.x, 1, physicBody.position.z)); // Force position to exactly 1
             }
         }
     }
@@ -315,7 +316,7 @@ export function addPerson(scene, world) {
                 // Apply forward impulse when starting the jump
                 if (physicBody) {
                     // Apply an impulse in the negative Z direction (forward)
-                    const jumpForce = new Vec3(0, 20, -20); //  forward force
+                    const jumpForce = new THREE.Vector3(0, 20, -20); //  forward force
                     physicBody.applyImpulse(jumpForce, physicBody.position);
                 }
             }
@@ -388,7 +389,7 @@ export function addPerson(scene, world) {
                 isJumping = true;
                 if (physicBody) {
                     // Initial jump impulse - ensure the body actually moves
-                    physicBody.velocity.set(0, -1, -20); // Stronger upward and forward momentum
+                    physicBody.setVelocity(new THREE.Vector3(0, -1, -20)); // Stronger upward and forward momentum
                     console.log("Starting jump after reset! Position:", physicBody.position, "Velocity:", physicBody.velocity);
 
                     // Force the body to be active and ensure it's not sleeping

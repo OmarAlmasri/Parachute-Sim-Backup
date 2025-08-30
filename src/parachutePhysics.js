@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import CANNON, { Vec3 } from "cannon";
 
 // Physics constants from the guide
 export const PHYSICS_CONSTANTS = {
@@ -170,16 +169,16 @@ export class ParachutePhysics {
         if (this.state === ParachuteState.OPENING) {
             const openingProgress = (Date.now() - this.parachuteDeployTime) / (this.openingDuration * 1000);
             const tensionFactor = Math.min(openingProgress, 1.0);
-            
+
             // Apply gradual tension during opening
             const baseTension = this.mass * PHYSICS_CONSTANTS.GRAVITY * 0.8; // 80% of weight initially
             const finalTension = this.mass * PHYSICS_CONSTANTS.GRAVITY; // Full weight when fully open
-            
+
             const currentTension = baseTension + (finalTension - baseTension) * tensionFactor;
             return new THREE.Vector3(0, currentTension, 0);
         }
 
-        return new THREE.Vector3(0, this.mass * PHYSICS_CONSTANTS.GRAVITY, 0); 
+        return new THREE.Vector3(0, this.mass * PHYSICS_CONSTANTS.GRAVITY, 0);
     }
 
     // Vt = √[(2 × m × g) / (ρ × A × Cd)]
@@ -218,7 +217,7 @@ export class ParachutePhysics {
         const analysis = this.calculateTerminalVelocity();
         const currentVelocity = this.velocity.length();
         const velocityRatio = currentVelocity / analysis.value;
-    
+
         return {
             ...analysis,
             currentVelocity,
@@ -254,13 +253,13 @@ export class ParachutePhysics {
     }
 
     // Main physics update
-    update(deltaTime, cannonBody) {
+    update(deltaTime, physicsBody) {
         // Update time
         const currentTime = Date.now();
         const dt = deltaTime;
 
         // Update environmental conditions based on altitude using the new function
-        this.updateEnvironmentalConditions(cannonBody.position.y);
+        this.updateEnvironmentalConditions(physicsBody.position.y);
 
         // Check if parachute opening phase is complete
         if (this.state === ParachuteState.OPENING) {
@@ -270,11 +269,11 @@ export class ParachutePhysics {
             }
         }
 
-        // Get current velocity from cannon body
+        // Get current velocity from physics body
         this.velocity.set(
-            cannonBody.velocity.x,
-            cannonBody.velocity.y,
-            cannonBody.velocity.z
+            physicsBody.velocity.x,
+            physicsBody.velocity.y,
+            physicsBody.velocity.z
         );
 
         // Only apply parachute physics when actually falling (not on ground)
@@ -303,10 +302,7 @@ export class ParachutePhysics {
             totalForce.add(tensionForce);
 
             // Apply combined force to physics body
-            cannonBody.applyForce(
-                new Vec3(totalForce.x, totalForce.y, totalForce.z),
-                cannonBody.position
-            );
+            physicsBody.applyForce(totalForce);
         }
 
         // Update terminal velocity
@@ -323,7 +319,7 @@ export class ParachutePhysics {
         }
 
         // Update position reference
-        this.position.copy(cannonBody.position);
+        this.position.copy(physicsBody.position);
     }
 
     // Get current physics state
@@ -365,7 +361,7 @@ export class ParachutePhysics {
     getTensionInfo() {
         const tensionForce = this.calculateTension();
         const tensionMagnitude = tensionForce.length();
-        
+
         return {
             tensionForce: tensionForce.clone(),
             tensionMagnitude: tensionMagnitude,
@@ -498,7 +494,7 @@ export class ParachutePhysics {
 // Utility functions for external use
 export function createParachutePhysics(world, mass) {
     const physics = new ParachutePhysics(world, mass);
-    
+
     return physics;
 }
 
@@ -510,7 +506,7 @@ export function calculateFreefallTime(initialHeight, finalHeight = 0) {
     return Math.sqrt((2 * height) / PHYSICS_CONSTANTS.GRAVITY);
 }
 
- //v = √(2 × g × h)
+//v = √(2 × g × h)
 export function calculateLandingSpeed(initialHeight, finalHeight = 0) {
     // Simple landing speed calculation (ignoring air resistance for simplicity)
     const height = initialHeight - finalHeight;
